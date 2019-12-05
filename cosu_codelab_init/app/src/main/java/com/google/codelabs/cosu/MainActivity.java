@@ -16,6 +16,8 @@ package com.google.codelabs.cosu;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.admin.DevicePolicyManager;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -44,6 +46,11 @@ public class MainActivity extends Activity {
     private ImageView imageView;
     private String mCurrentPhotoPath;
     private int permissionCheck;
+    public DevicePolicyManager mDevicePolicyManager;
+    private Button lockTaskButton;
+
+    public static final String EXTRA_FILEPATH =
+            "com.google.codelabs.cosu.EXTRA_FILEPATH";
 
     private static final int REQUEST_IMAGE_CAPTURE = 1;
     private static final int PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 2;
@@ -75,6 +82,28 @@ public class MainActivity extends Activity {
                 else{
                     Toast.makeText(
                             getApplicationContext(),R.string.no_camera_apps,Toast.LENGTH_SHORT)
+                            .show();
+                }
+            }
+        });
+
+        mDevicePolicyManager = (DevicePolicyManager)
+                getSystemService(Context.DEVICE_POLICY_SERVICE);
+
+        lockTaskButton = (Button) findViewById(R.id.start_lock_button);
+        lockTaskButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if ( mDevicePolicyManager.isLockTaskPermitted(
+                        getApplicationContext().getPackageName())) {
+                    Intent lockIntent = new Intent(getApplicationContext(),
+                            LockedActivity.class);
+                    lockIntent.putExtra(EXTRA_FILEPATH, mCurrentPhotoPath);
+                    startActivity(lockIntent);
+                    finish();
+                } else {
+                    Toast.makeText(getApplicationContext(),
+                            R.string.not_lock_whitelisted,Toast.LENGTH_SHORT)
                             .show();
                 }
             }
@@ -171,5 +200,6 @@ public class MainActivity extends Activity {
 
         Bitmap imageBitmap = BitmapFactory.decodeFile(mCurrentPhotoPath, bmOptions);
         imageView.setImageBitmap(imageBitmap);
+        lockTaskButton.setEnabled(true);
     }
 }
